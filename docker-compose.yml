@@ -25,3 +25,5 @@ services:
     # Cho phép DB_HOST=host.docker.internal trỏ tới DB chạy trên host VPS (Linux).
     extra_hosts:
       - 'host.docker.internal:host-gateway'
+    networks:
+      - chuot_net
