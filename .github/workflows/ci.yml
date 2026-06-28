@@ -84,13 +84,16 @@ jobs:
             ${{ steps.meta.outputs.image }}:latest
             ${{ steps.meta.outputs.image }}:${{ github.sha }}
 
-  # ---- Deploy: SSH lên VPS, pull image mới, up lại compose ----
+  # ---- Deploy: SSH lên VPS → cập nhật image cho Deployment k3s + chờ rollout ----
+  # Yêu cầu trên VPS (1 lần): đã `kubectl apply -f poptify-k3s.yaml` + tạo Secret
+  # `poptify-backend-env`, và VPS_USER có kubeconfig (vd: ~/.kube/config copy từ
+  # /etc/rancher/k3s/k3s.yaml) để chạy `kubectl` không cần sudo.
   deploy:
     needs: docker
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to VPS over SSH
+      - name: Deploy to k3s over SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -98,11 +101,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -e
-            cd /opt/poptify-backend
             IMAGE="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
-            # Package GHCR để Public → pull ẩn danh, không cần docker login.
-            # (Nếu chuyển lại Private: thêm 1 dòng `docker login ghcr.io` với PAT read:packages.)
-            export BACKEND_IMAGE="${IMAGE}:${{ github.sha }}"
-            docker compose pull
-            docker compose up -d
-            docker image prune -f
+            # Set image về tag SHA (immutable) → đảm bảo pod kéo đúng bản vừa build
+            kubectl -n default set image deployment/poptify-backend backend="${IMAGE}:${{ github.sha }}"
+            kubectl -n default rollout status deployment/poptify-backend --timeout=180s

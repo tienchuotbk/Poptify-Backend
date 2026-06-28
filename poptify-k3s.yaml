@@ -1,0 +1,69 @@
+# Poptify Backend — k3s Deployment + Service
+# Apply: kubectl apply -f poptify-k3s.yaml
+#
+# TRƯỚC KHI APPLY — tạo Secret env từ file .env (KHÔNG commit secret):
+#   kubectl create secret generic poptify-backend-env --from-env-file=.env
+# (đổi .env → tạo lại secret + `kubectl rollout restart deploy/poptify-backend`)
+#
+# DB (chuot-db-1) chạy NGOÀI k3s (docker) → pod k3s KHÔNG vào được network docker,
+# KHÔNG dùng host.docker.internal. MySQL publish 0.0.0.0:3306 trên host → trong .env:
+#   DB_HOST=<IP_HOST_VPS>   DB_PORT=3306   (dùng IP host thật)
+#
+# GHCR package Public → không cần imagePullSecret. (Private thì thêm imagePullSecrets + regcred.)
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: poptify-backend
+  namespace: default
+spec:
+  replicas: 1 # migration chạy lúc start → giữ 1 replica (đa replica cần tách migration ra Job/initContainer)
+  selector:
+    matchLabels:
+      app: poptify-backend
+  template:
+    metadata:
+      labels:
+        app: poptify-backend
+    spec:
+      containers:
+        - name: backend
+          image: ghcr.io/tienchuotbk/poptify-backend:latest
+          imagePullPolicy: Always # tag latest → luôn pull bản mới khi pod restart
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: poptify-backend-env # = .env
+          readinessProbe: # /readyz check DB (503 khi DB down)
+            httpGet:
+              path: /readyz
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe: # /healthz liveness thuần
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 192Mi
+            limits:
+              cpu: '1'
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: poptify-backend-service
+  namespace: default
+spec:
+  selector:
+    app: poptify-backend
+  ports:
+    - protocol: TCP
+      port: 3000 # Service nội bộ (ClusterIP)
+      targetPort: 3000 # cổng container Node.js
