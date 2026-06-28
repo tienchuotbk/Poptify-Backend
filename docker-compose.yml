@@ -17,7 +17,7 @@
 
 services:
   app:
-    image: ${BACKEND_IMAGE:-registry.gitlab.com/your-group/poptify-backend:latest}
+    image: ${BACKEND_IMAGE:-ghcr.io/tienchuotbk/poptify-backend:latest}
     restart: unless-stopped
     env_file: .env
     ports:
