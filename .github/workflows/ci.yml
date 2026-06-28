@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: poptify
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test
+      - run: npm run test:e2e
+
+      # Migration chạy trên MySQL service container (task 4.5).
+      # Initial migration được thêm ở task 1.5; tới khi đó bước này chạy 0 migration.
+      - name: Run migrations (MySQL)
+        run: npm run migration:run
+        env:
+          NODE_ENV: production
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USERNAME: root
+          DB_PASSWORD: root
+          DB_NAME: poptify
+
+      # TODO(task 4.5): bật blocking sau khi giải quyết hết high/critical vuln.
+      - name: Security audit (non-blocking tạm thời)
+        run: npm audit --audit-level=high
+        continue-on-error: true

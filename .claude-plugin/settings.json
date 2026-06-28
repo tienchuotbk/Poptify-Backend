@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git show:*)",
+      "Bash(rg:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run build:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm run test:*)",
+      "Bash(pnpm run lint:*)",
+      "Bash(pnpm run build:*)",
+      "Bash(yarn test:*)",
+      "Bash(yarn run test:*)",
+      "Bash(yarn run lint:*)",
+      "Bash(yarn run build:*)"
+    ],
+    "deny": [
+      "Bash(sudo:*)",
+      "Bash(rm -rf:*)",
+      "Bash(rm -fr:*)",
+      "Bash(psql:*)",
+      "Bash(mysql:*)",
+      "Bash(mongod:*)",
+      "Bash(mongo:*)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*id_rsa*)",
+      "Read(**/*id_ed25519*)",
+      "Read(**/.aws/**)",
+      "Read(**/.ssh/**)",
+      "Read(**/.npmrc)"
+    ],
+    "ask": [
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(rm -r:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git push -f:*)",
+      "Bash(git push --force:*)",
+      "Bash(git clean -f:*)",
+      "Bash(git rebase:*)",
+      "Bash(git merge:*)",
+      "Bash(npm install:*)",
+      "Bash(npx:*)",
+      "Bash(pnpm install:*)",
+      "Bash(yarn install:*)"
+    ]
+  },
+  "sandbox": {
+    "failIfUnavailable": true,
+    "filesystem": {
+      "denyRead": [
+        ".env",
+        ".env.*",
+        "!.env.example",
+        "secrets/**",
+        "**/*.pem",
+        "**/*.key",
+        "**/*id_rsa*",
+        "**/*id_ed25519*",
+        "**/.aws/**",
+        "**/.ssh/**"
+      ],
+      "allowRead": [
+        ".env.example",
+        ".env.sample",
+        "docs/**"
+      ]
+    }
+  }
+}
