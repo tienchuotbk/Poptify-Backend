@@ -15,9 +15,11 @@ import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
 import { ShopifyModule } from './shopify/shopify.module';
 import { WebhookModule } from './webhook/webhook.module';
+import { AnnouncementBarsModule } from './widgets/announcement-bars/announcement-bars.module';
 import { AppSettingsModule } from './widgets/app-settings/app-settings.module';
 import { WidgetsCommonModule } from './widgets/common/widgets-common.module';
 import { PopupsModule } from './widgets/popups/popups.module';
+import { ProductSlidersModule } from './widgets/product-sliders/product-sliders.module';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { PopupsModule } from './widgets/popups/popups.module';
     WidgetsCommonModule,
     AppSettingsModule,
     PopupsModule,
+    AnnouncementBarsModule,
+    ProductSlidersModule,
     WebhookModule,
     HealthModule,
   ],

@@ -1,5 +1,7 @@
+import { AnnouncementBarEntity } from '../../widgets/announcement-bars/announcement-bar.entity';
 import { AppSettingsEntity } from '../../widgets/app-settings/app-settings.entity';
 import { PopupEntity } from '../../widgets/popups/popup.entity';
+import { ProductSliderEntity } from '../../widgets/product-sliders/product-slider.entity';
 import { ProcessedWebhookEntity } from './processed-webhook.entity';
 import { ShopEntity } from './shop.entity';
 import { ShopifySessionEntity } from './shopify-session.entity';
@@ -15,4 +17,6 @@ export const entities = [
   ProcessedWebhookEntity,
   PopupEntity,
   AppSettingsEntity,
+  AnnouncementBarEntity,
+  ProductSliderEntity,
 ];
