@@ -1,0 +1,27 @@
+# Docker Compose cho VPS: chỉ chạy app (image từ GitLab Registry).
+# DB dùng MySQL CÓ SẴN (không tạo container DB mới) — app kết nối qua biến trong `.env`.
+# App export ra host cổng 7001 (→ container 3000).
+#
+# Trên VPS: đặt file này + `.env` tại /opt/poptify-backend rồi:
+#   docker compose pull && docker compose up -d
+#
+# `.env` cần (xem .env.example):
+#   SHOPIFY_API_KEY/SECRET/SCOPES, APP_URL, SHOPIFY_API_VERSION=2026-04,
+#   TOKEN_ENCRYPTION_KEY, CORS_ORIGINS, PORT=3000
+#   DB của bạn (DB sẵn có):
+#     DB_HOST=...   # nếu DB chạy NGAY TRÊN host VPS (ngoài docker) → host.docker.internal
+#                   # nếu DB remote/managed → hostname của nó
+#     DB_PORT=3306  DB_USERNAME=...  DB_PASSWORD=...  DB_NAME=...
+#   BACKEND_IMAGE = đường dẫn image registry (CI set; mặc định latest)
+#   APP_PORT      = cổng host (mặc định 7001)
+
+services:
+  app:
+    image: ${BACKEND_IMAGE:-registry.gitlab.com/your-group/poptify-backend:latest}
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '${APP_PORT:-7001}:3000'
+    # Cho phép DB_HOST=host.docker.internal trỏ tới DB chạy trên host VPS (Linux).
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'

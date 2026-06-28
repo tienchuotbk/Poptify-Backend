@@ -1,0 +1,84 @@
+# GitLab CI/CD — Poptify Backend
+# Pipeline: test (lint+build+unit+e2e+migration trên MySQL) → build & push Docker image
+# (GitLab Container Registry) → deploy SSH lên VPS (docker compose pull + up).
+#
+# CI/CD Variables cần đặt (Settings → CI/CD → Variables), nên để "Masked"/"Protected":
+#   SSH_PRIVATE_KEY   private key SSH tới VPS (deploy user)
+#   VPS_HOST          ip/host VPS
+#   VPS_USER          user SSH trên VPS (vd deploy)
+#   REGISTRY_USER     GitLab Deploy Token username (để VPS docker login pull image)
+#   REGISTRY_PASSWORD GitLab Deploy Token password (scope: read_registry)
+# (CI_REGISTRY, CI_REGISTRY_IMAGE, CI_REGISTRY_USER/PASSWORD do GitLab cấp sẵn.)
+
+stages:
+  - test
+  - build
+  - deploy
+
+# ---- Test: lint + build + unit + e2e + migration trên MySQL service ----
+test:
+  stage: test
+  image: node:20
+  services:
+    - name: mysql:8
+      alias: mysql
+  variables:
+    MYSQL_ROOT_PASSWORD: root
+    MYSQL_DATABASE: poptify
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm/
+  script:
+    - npm ci --cache .npm --prefer-offline
+    - npm run lint
+    - npm run build
+    - npm test
+    - npm run test:e2e
+    # Verify migration up/down/up trên MySQL thật (dùng datasource JS đã build)
+    - export NODE_ENV=production DB_HOST=mysql DB_PORT=3306 DB_USERNAME=root DB_PASSWORD=root DB_NAME=poptify
+    - npm run migration:run:prod
+    - npx typeorm migration:revert -d dist/database/data-source.js
+    - npm run migration:run:prod
+
+# ---- Build & push Docker image lên GitLab Container Registry ----
+build:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+  variables:
+    DOCKER_TLS_CERTDIR: '/certs'
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - docker build -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA" -t "$CI_REGISTRY_IMAGE:latest" .
+    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
+    - docker push "$CI_REGISTRY_IMAGE:latest"
+
+# ---- Deploy: SSH lên VPS, pull image mới, up lại compose ----
+deploy:
+  stage: deploy
+  image: alpine:3
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  before_script:
+    - apk add --no-cache openssh-client
+    - eval "$(ssh-agent -s)"
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - ssh-keyscan "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+  script:
+    - |
+      ssh "$VPS_USER@$VPS_HOST" "
+        set -e
+        cd /opt/poptify-backend
+        echo '$REGISTRY_PASSWORD' | docker login -u '$REGISTRY_USER' --password-stdin '$CI_REGISTRY'
+        export BACKEND_IMAGE='$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA'
+        docker compose pull
+        docker compose up -d
+        docker image prune -f
+      "
