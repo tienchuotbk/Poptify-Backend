@@ -100,7 +100,8 @@ jobs:
             set -e
             cd /opt/poptify-backend
             IMAGE="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
-            echo "${{ secrets.GHCR_PULL_TOKEN }}" | docker login ghcr.io -u "${{ github.repository_owner }}" --password-stdin
+            # Package GHCR để Public → pull ẩn danh, không cần docker login.
+            # (Nếu chuyển lại Private: thêm 1 dòng `docker login ghcr.io` với PAT read:packages.)
             export BACKEND_IMAGE="${IMAGE}:${{ github.sha }}"
             docker compose pull
             docker compose up -d
