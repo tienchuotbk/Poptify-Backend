@@ -1,0 +1,45 @@
+{% doc %}
+  Renders a single product card for the Poptify product slider.
+  @param {object} product - The Shopify product object (resolved via handle/collection).
+  @param {object} disp - Display config flags (showImage/showTitle/showPrice/showComparePrice/showAddToCart/showSaleBadge).
+  @example
+  {% render 'poptify-product-card', product: product, disp: slider.display %}
+{% enddoc %}
+
+<div class="poptify-card">
+  <a class="poptify-card-link" href="{{ product.url }}">
+    {%- if disp.showSaleBadge and product.compare_at_price > product.price -%}
+      <span class="poptify-card-badge">{{ 'product.sale' | t: default: 'Sale' }}</span>
+    {%- endif -%}
+    {%- if disp.showImage -%}
+      {{
+        product.featured_image
+        | image_url: width: 400
+        | image_tag: loading: 'lazy', class: 'poptify-card-img'
+      }}
+    {%- endif -%}
+    {%- if disp.showTitle -%}
+      <div class="poptify-card-title">{{ product.title }}</div>
+    {%- endif -%}
+    {%- if disp.showPrice -%}
+      <div class="poptify-card-price">
+        <span>{{ product.price | money }}</span>
+        {%- if disp.showComparePrice and product.compare_at_price > product.price -%}
+          <s class="poptify-card-compare">{{ product.compare_at_price | money }}</s>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+  </a>
+  {%- if disp.showAddToCart -%}
+    <form method="post" action="{{ routes.cart_add_url }}" class="poptify-card-form">
+      <input
+        type="hidden"
+        name="id"
+        value="{{ product.selected_or_first_available_variant.id }}"
+      >
+      <button type="submit" class="poptify-card-atc">
+        {{ 'product.add_to_cart' | t: default: 'Add to cart' }}
+      </button>
+    </form>
+  {%- endif -%}
+</div>

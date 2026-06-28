@@ -2,5 +2,9 @@
   "name": "Poptify Widgets",
   "popups": {
     "name": "Poptify Popups"
+  },
+  "product": {
+    "sale": "Sale",
+    "add_to_cart": "Add to cart"
   }
 }

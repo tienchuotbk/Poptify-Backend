@@ -23,19 +23,26 @@ import {
 // CSS selector allow-list: chữ/số + ký tự selector hợp lệ. CẤM `<` (chống tag/XSS
 // injection); `>` được giữ vì là CSS child combinator hợp lệ (vd `.a > .b`).
 const SELECTOR_RE = /^[a-zA-Z0-9 ._#>[\]="':-]+$/;
+// Shopify handle: chữ thường/số/`-`/`_` (theme extension render Liquid-native qua handle).
+const HANDLE_RE = /^[a-z0-9][a-z0-9_-]*$/;
 
 class SliderSourceConfigDto {
+  // featured: danh sách product handle (FE resource picker trả id + handle; lưu handle
+  // để Liquid render `all_products[handle]` — giá/tồn kho luôn tươi, không cần scope).
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(50)
   @IsString({ each: true })
-  @MaxLength(64, { each: true })
-  productIds?: string[];
+  @MaxLength(255, { each: true })
+  @Matches(HANDLE_RE, { each: true, message: 'productHandles không hợp lệ' })
+  productHandles?: string[];
 
+  // collection: handle của collection (`collections[handle].products`).
   @IsOptional()
   @IsString()
-  @MaxLength(64)
-  collectionId?: string;
+  @MaxLength(255)
+  @Matches(HANDLE_RE, { message: 'collectionHandle không hợp lệ' })
+  collectionHandle?: string;
 }
 
 class SliderLayoutConfigDto {

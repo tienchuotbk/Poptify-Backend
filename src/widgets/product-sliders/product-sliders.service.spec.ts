@@ -54,7 +54,7 @@ describe('ProductSlidersService (task 10.3)', () => {
   it('create + publish key "sliders" (id=publicId, không leak field nội bộ)', async () => {
     const slider = await service.create(
       SHOP_A,
-      baseDto({ sourceConfig: { productIds: ['1', '2'] } }),
+      baseDto({ sourceConfig: { productHandles: ['a', 'b'] } }),
     );
     const [shop, key, value] = publish.mock.calls[0];
     expect(shop).toBe(SHOP_A);
@@ -67,12 +67,12 @@ describe('ProductSlidersService (task 10.3)', () => {
     expect(projected).not.toHaveProperty('createdAt');
   });
 
-  it('productIds rỗng → publish graceful (không 500, projection vẫn xuất reference)', async () => {
+  it('productHandles rỗng → publish graceful (không 500, projection vẫn xuất reference)', async () => {
     await expect(
-      service.create(SHOP_A, baseDto({ sourceConfig: { productIds: [] } })),
+      service.create(SHOP_A, baseDto({ sourceConfig: { productHandles: [] } })),
     ).resolves.toBeDefined();
     expect(publish.mock.calls[0][2].sliders[0].source).toEqual({
-      productIds: [],
+      productHandles: [],
     });
   });
 

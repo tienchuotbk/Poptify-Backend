@@ -20,13 +20,13 @@ async function errorProps(plain: Record<string, unknown>): Promise<string[]> {
 }
 
 describe('CreateProductSliderDto (task 10.2)', () => {
-  it('chấp nhận featured (productIds) hợp lệ', async () => {
+  it('chấp nhận featured (productHandles) hợp lệ', async () => {
     expect(
       await errorProps({
         name: 'New arrivals',
         sourceType: 'featured',
         enabled: true,
-        sourceConfig: { productIds: ['gid://shopify/Product/1', '2'] },
+        sourceConfig: { productHandles: ['cool-shirt', 'nice-hat'] },
         layoutConfig: { desktopItems: 4, tabletItems: 2, mobileItems: 1 },
         behaviorConfig: { autoplay: true, autoplaySpeed: 3000 },
         displayConfig: { showImage: true, showPrice: true },
@@ -43,9 +43,18 @@ describe('CreateProductSliderDto (task 10.2)', () => {
       await errorProps({
         name: 'Coll',
         sourceType: 'collection',
-        sourceConfig: { collectionId: 'gid://shopify/Collection/9' },
+        sourceConfig: { collectionHandle: 'summer-sale' },
       }),
     ).toEqual([]);
+  });
+
+  it('reject handle không hợp lệ (chữ hoa/khoảng trắng/gid)', async () => {
+    const props = await errorProps({
+      name: 'x',
+      sourceType: 'featured',
+      sourceConfig: { productHandles: ['gid://shopify/Product/1'] },
+    });
+    expect(props).toContain('productHandles');
   });
 
   it('reject best_sellers (đã cắt — ngoài enum)', async () => {
@@ -78,17 +87,17 @@ describe('CreateProductSliderDto (task 10.2)', () => {
     ).toContain('mobileItems');
   });
 
-  it('reject productIds > 50', async () => {
-    const ids = Array.from({ length: 51 }, function (_v, i) {
-      return String(i);
+  it('reject productHandles > 50', async () => {
+    const handles = Array.from({ length: 51 }, function (_v, i) {
+      return 'p' + i;
     });
     expect(
       await errorProps({
         name: 'x',
         sourceType: 'featured',
-        sourceConfig: { productIds: ids },
+        sourceConfig: { productHandles: handles },
       }),
-    ).toContain('productIds');
+    ).toContain('productHandles');
   });
 
   it('reject customSelector chứa ký tự nguy hiểm', async () => {

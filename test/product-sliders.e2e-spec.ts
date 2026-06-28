@@ -20,7 +20,7 @@ const validSlider = {
   name: 'New arrivals',
   sourceType: 'featured',
   enabled: true,
-  sourceConfig: { productIds: ['1', '2'] },
+  sourceConfig: { productHandles: ['cool-shirt', 'nice-hat'] },
 };
 
 describe('ProductSlidersController (e2e) (task 10.3)', () => {

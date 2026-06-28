@@ -1,0 +1,59 @@
+.poptify-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 16px;
+  background: #1a1a1a;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  text-align: center;
+  z-index: 2147482000;
+}
+.poptify-bar-top {
+  order: -1;
+}
+.poptify-bar-sticky {
+  position: sticky;
+  top: 0;
+}
+.poptify-bar-bottom.poptify-bar-sticky {
+  top: auto;
+  bottom: 0;
+}
+
+.poptify-bar-text {
+  font-weight: 500;
+}
+.poptify-bar-timer {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.poptify-bar-btn {
+  padding: 4px 12px;
+  background: #ffffff;
+  color: #1a1a1a;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.poptify-bar-progress {
+  flex: 1 1 120px;
+  max-width: 240px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.poptify-bar-progress-fill {
+  height: 100%;
+  width: 0;
+  background: currentColor;
+  transition: width 0.3s ease;
+}

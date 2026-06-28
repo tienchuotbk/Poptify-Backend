@@ -1,0 +1,23 @@
+{% comment %}
+  Poptify — Announcement Bar app embed block (storefront).
+  Đọc shop.metafields.app.settings + bars (backend publish) → JSON; asset JS render
+  simple/countdown/free_shipping_progress + gate client-side. Không gọi backend (D6).
+{% endcomment %}
+
+<script type="application/json" id="poptify-bars-settings">
+  {{ shop.metafields.app.settings.value | json }}
+</script>
+<script type="application/json" id="poptify-bars-data">
+  {{ shop.metafields.app.bars.value | json }}
+</script>
+<div id="poptify-bars-root" data-page-type="{{ request.page_type }}" hidden></div>
+
+{% schema %}
+{
+  "name": "Poptify Announcement Bars",
+  "target": "body",
+  "javascript": "poptify-bars.js",
+  "stylesheet": "poptify-bars.css",
+  "settings": []
+}
+{% endschema %}

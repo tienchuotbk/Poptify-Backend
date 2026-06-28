@@ -1,0 +1,67 @@
+{% comment %}
+  Poptify — Product Slider app block (storefront). Merchant thêm block vào section
+  (vd product page). Đọc shop.metafields.app.sliders → render product **Liquid-native**
+  qua handle (`all_products[handle]` / `collections[handle].products`) → giá/tồn kho
+  luôn tươi, không cần Storefront token. Metafield đã gate server-side (app off → rỗng).
+{% endcomment %}
+
+{%- assign poptify_sliders = shop.metafields.app.sliders.value -%}
+{%- assign page_key = request.page_type -%}
+{%- if page_key == 'index' -%}{%- assign page_key = 'homepage' -%}{%- endif -%}
+
+{%- if poptify_sliders and poptify_sliders.sliders -%}
+  {%- for slider in poptify_sliders.sliders -%}
+    {%- assign tps = slider.placement.targetPages -%}
+    {%- assign show_here = false -%}
+    {%- if tps == empty -%}
+      {%- assign show_here = true -%}
+    {%- elsif tps contains 'all' -%}
+      {%- assign show_here = true -%}
+    {%- elsif tps contains page_key -%}
+      {%- assign show_here = true -%}
+    {%- endif -%}
+
+    {%- if show_here -%}
+      {%- assign layout = slider.layout -%}
+      <div
+        class="poptify-slider"
+        data-autoplay="{% if slider.behavior.autoplay %}true{% else %}false{% endif %}"
+        data-autoplay-speed="{{ slider.behavior.autoplaySpeed | default: 0 }}"
+        data-arrows="{% if slider.behavior.showArrows %}true{% else %}false{% endif %}"
+        data-dots="{% if slider.behavior.showDots %}true{% else %}false{% endif %}"
+        data-loop="{% if slider.behavior.infiniteLoop %}true{% else %}false{% endif %}"
+        style="--poptify-desktop: {{ layout.desktopItems | default: 4 }}; --poptify-tablet: {{ layout.tabletItems | default: 2 }}; --poptify-mobile: {{ layout.mobileItems | default: 1 }};"
+        {{ block.shopify_attributes }}
+      >
+        {%- if slider.name -%}
+          <h2 class="poptify-slider-title">{{ slider.name }}</h2>
+        {%- endif -%}
+        <div class="poptify-slider-track">
+          {%- if slider.sourceType == 'collection' -%}
+            {%- assign coll = collections[slider.source.collectionHandle] -%}
+            {%- for product in coll.products limit: 24 -%}
+              {% render 'poptify-product-card', product: product, disp: slider.display %}
+            {%- endfor -%}
+          {%- else -%}
+            {%- for handle in slider.source.productHandles -%}
+              {%- assign product = all_products[handle] -%}
+              {%- unless product == empty -%}
+                {% render 'poptify-product-card', product: product, disp: slider.display %}
+              {%- endunless -%}
+            {%- endfor -%}
+          {%- endif -%}
+        </div>
+      </div>
+    {%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Poptify Product Slider",
+  "target": "section",
+  "stylesheet": "poptify-slider.css",
+  "javascript": "poptify-slider.js",
+  "settings": []
+}
+{% endschema %}
