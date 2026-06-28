@@ -27,3 +27,8 @@ services:
       - 'host.docker.internal:host-gateway'
     networks:
       - chuot_net
+
+networks:
+  chuot_net:
+    name: chuot_default
+    external: true
