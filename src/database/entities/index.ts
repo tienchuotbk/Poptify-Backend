@@ -1,3 +1,5 @@
+import { AppSettingsEntity } from '../../widgets/app-settings/app-settings.entity';
+import { PopupEntity } from '../../widgets/popups/popup.entity';
 import { ProcessedWebhookEntity } from './processed-webhook.entity';
 import { ShopEntity } from './shop.entity';
 import { ShopifySessionEntity } from './shopify-session.entity';
@@ -11,4 +13,6 @@ export const entities = [
   ShopifySessionEntity,
   ShopEntity,
   ProcessedWebhookEntity,
+  PopupEntity,
+  AppSettingsEntity,
 ];

@@ -38,9 +38,13 @@ jobs:
       - run: npm run test:e2e
 
       # Migration chạy trên MySQL service container (task 4.5).
-      # Initial migration được thêm ở task 1.5; tới khi đó bước này chạy 0 migration.
-      - name: Run migrations (MySQL)
-        run: npm run migration:run
+      # Baseline migration thêm ở task 6.1 (gộp 1.5): tạo 3 bảng bootstrap.
+      # Verify cả up + down: run → revert (down sạch) → run lại (up idempotent).
+      - name: Migrations up/down/up (MySQL)
+        run: |
+          npm run migration:run
+          npm run migration:revert
+          npm run migration:run
         env:
           NODE_ENV: production
           DB_HOST: 127.0.0.1

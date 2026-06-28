@@ -1,3 +1,7 @@
+// reflect-metadata phải load TRƯỚC mọi class dùng decorator metadata
+// (class-validator/class-transformer DTO) — nếu không `Reflect.getMetadata` undefined.
+import 'reflect-metadata';
+
 // Jest setupFiles — chạy TRƯỚC khi import module test.
 // Cần thiết vì: (1) ConfigModule.forRoot validate eager lúc import AppModule;
 // (2) token-encryption transformer đọc TOKEN_ENCRYPTION_KEY lúc save/load entity.
