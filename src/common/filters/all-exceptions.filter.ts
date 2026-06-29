@@ -31,10 +31,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
       exception instanceof HttpException ? exception.getResponse() : undefined,
     );
 
-    this.logger.error(
-      `${request.method} ${request.url} → ${status}`,
-      JSON.stringify(redact({ headers: request.headers, body: request.body })),
+    const context = JSON.stringify(
+      redact({ headers: request.headers, body: request.body }),
     );
+    if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+      // 5xx: log full exception (stack + context) server-side để debug. Client vẫn
+      // chỉ nhận message generic (resolveMessage che chi tiết 5xx).
+      this.logger.error(
+        `${request.method} ${request.url} → ${status} ${context}`,
+        exception instanceof Error ? exception.stack : String(exception),
+      );
+    } else {
+      this.logger.error(`${request.method} ${request.url} → ${status}`, context);
+    }
 
     response.status(status).json({
       statusCode: status,
