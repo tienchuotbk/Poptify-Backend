@@ -43,6 +43,19 @@ export class TypeormSessionStorage {
     return entities.map((entity) => this.toSession(entity));
   }
 
+  /**
+   * Truy cập entity thô (gồm refreshToken/refreshTokenExpires — các field KHÔNG có
+   * trong `Session` của @shopify/shopify-api). Dùng bởi OfflineTokenService cho
+   * expiring offline token. Transformer tự giải mã accessToken/refreshToken khi đọc.
+   */
+  async loadEntity(id: string): Promise<ShopifySessionEntity | null> {
+    return (await this.repo.findOneBy({ id })) ?? null;
+  }
+
+  async saveEntity(entity: ShopifySessionEntity): Promise<void> {
+    await this.repo.save(entity);
+  }
+
   private toEntity(session: Session): ShopifySessionEntity {
     const entity = new ShopifySessionEntity();
     entity.id = session.id;

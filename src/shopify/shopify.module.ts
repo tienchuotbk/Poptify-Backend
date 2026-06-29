@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ShopEntity } from '../database/entities/shop.entity';
 import { ShopifySessionEntity } from '../database/entities/shopify-session.entity';
 import { AuthController } from './auth/auth.controller';
+import { OfflineTokenService } from './auth/offline-token.service';
 import { SessionTokenGuard } from './auth/session-token.guard';
 import { TokenExchangeService } from './auth/token-exchange.service';
 import { AdminGraphqlService } from './graphql/admin-graphql.service';
@@ -21,6 +22,7 @@ import { shopifyApiProvider } from './shopify.provider';
     shopifyApiProvider,
     TypeormSessionStorage,
     SessionTokenGuard,
+    OfflineTokenService,
     TokenExchangeService,
     AdminGraphqlService,
   ],
@@ -28,6 +30,7 @@ import { shopifyApiProvider } from './shopify.provider';
     SHOPIFY_API,
     TypeormSessionStorage,
     SessionTokenGuard,
+    OfflineTokenService,
     TokenExchangeService,
     AdminGraphqlService,
   ],
