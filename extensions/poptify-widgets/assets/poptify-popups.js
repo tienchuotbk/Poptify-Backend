@@ -167,6 +167,15 @@
       close.addEventListener('click', dismiss);
       box.appendChild(close);
     }
+    // Ảnh popup (design.imageUrl) — chỉ nhận https (BE đã validate; guard lần nữa).
+    if (d.imageUrl && /^https:\/\//i.test(d.imageUrl)) {
+      var img = document.createElement('img');
+      img.className = 'poptify-image';
+      img.src = d.imageUrl;
+      img.alt = c.title || '';
+      img.loading = 'lazy';
+      box.appendChild(img);
+    }
     if (c.title) box.appendChild(textEl('h2', 'poptify-title', c.title));
     if (c.description) box.appendChild(textEl('p', 'poptify-desc', c.description));
     if (c.couponCode) box.appendChild(textEl('div', 'poptify-coupon', c.couponCode));
