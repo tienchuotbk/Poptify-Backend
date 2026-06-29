@@ -102,4 +102,25 @@ describe('MetafieldPublisherService (task 6.5)', () => {
       /response thiếu metafieldsSet/,
     );
   });
+
+  it('403 → probe accessScopes để chẩn đoán rồi re-throw lỗi gốc', async () => {
+    const { service, getValidSession, query } = buildService();
+    getValidSession.mockResolvedValue(fakeSession);
+    const err403 = new Error(
+      'Received an error response (403 Forbidden) from Shopify',
+    );
+    query
+      .mockResolvedValueOnce({ shop: { id: SHOP_GID } }) // getShopGid
+      .mockRejectedValueOnce(err403) // metafieldsSet → 403
+      .mockResolvedValueOnce({
+        // probe accessScopes
+        currentAppInstallation: { accessScopes: [{ handle: 'read_products' }] },
+      });
+
+    await expect(service.publish(SHOP, 'popups', {})).rejects.toThrow(
+      /403 Forbidden/,
+    );
+    // call 3 = probe accessScopes (chẩn đoán đã chạy)
+    expect(query).toHaveBeenCalledTimes(3);
+  });
 });
