@@ -54,6 +54,7 @@
       var nav = document.createElement('div');
       nav.className = 'poptify-slider-dots';
       var pages = Math.ceil(cards / itemsPerView());
+      var dotEls = [];
       for (var i = 0; i < pages; i++) {
         (function (idx) {
           var dot = document.createElement('button');
@@ -64,9 +65,28 @@
             track.scrollTo({ left: idx * page(), behavior: 'smooth' });
           });
           nav.appendChild(dot);
+          dotEls.push(dot);
         })(i);
       }
       slider.appendChild(nav);
+
+      // Đồng bộ dot active theo vị trí scroll (rAF debounce).
+      function setActiveDot() {
+        var idx = Math.round(track.scrollLeft / page());
+        for (var i = 0; i < dotEls.length; i++) {
+          dotEls[i].classList.toggle('is-active', i === idx);
+        }
+      }
+      var raf = 0;
+      track.addEventListener(
+        'scroll',
+        function () {
+          if (raf) cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(setActiveDot);
+        },
+        { passive: true },
+      );
+      setActiveDot();
     }
 
     function itemsPerView() {

@@ -150,9 +150,14 @@
     if (d.borderRadius) box.style.borderRadius = d.borderRadius;
     if (d.width) box.style.maxWidth = d.width;
 
+    function onKey(e) {
+      if (e.key === 'Escape' || e.keyCode === 27) dismiss();
+    }
     function dismiss() {
+      document.removeEventListener('keydown', onKey);
       if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
     }
+    document.addEventListener('keydown', onKey);
 
     if (d.showCloseButton !== false) {
       var close = document.createElement('button');
@@ -161,6 +166,15 @@
       close.textContent = '×';
       close.addEventListener('click', dismiss);
       box.appendChild(close);
+    }
+    // Ảnh popup (design.imageUrl) — chỉ nhận https (BE đã validate; guard lần nữa).
+    if (d.imageUrl && /^https:\/\//i.test(d.imageUrl)) {
+      var img = document.createElement('img');
+      img.className = 'poptify-image';
+      img.src = d.imageUrl;
+      img.alt = c.title || '';
+      img.loading = 'lazy';
+      box.appendChild(img);
     }
     if (c.title) box.appendChild(textEl('h2', 'poptify-title', c.title));
     if (c.description) box.appendChild(textEl('p', 'poptify-desc', c.description));

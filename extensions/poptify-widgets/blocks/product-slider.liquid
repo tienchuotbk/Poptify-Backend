@@ -13,13 +13,15 @@
   {%- for slider in poptify_sliders.sliders -%}
     {%- assign tps = slider.placement.targetPages -%}
     {%- assign show_here = false -%}
-    {%- if tps == empty -%}
+    {%- unless tps -%}
+      {%- comment -%} Không set targetPages (nil) → hiện mọi trang (khớp logic JS popup/bar).
+        Lưu ý: Liquid `nil == empty` là false nên phải dùng `unless` để bắt nil. {%- endcomment -%}
       {%- assign show_here = true -%}
-    {%- elsif tps contains 'all' -%}
-      {%- assign show_here = true -%}
-    {%- elsif tps contains page_key -%}
-      {%- assign show_here = true -%}
-    {%- endif -%}
+    {%- else -%}
+      {%- if tps == empty or tps contains 'all' or tps contains page_key -%}
+        {%- assign show_here = true -%}
+      {%- endif -%}
+    {%- endunless -%}
 
     {%- if show_here -%}
       {%- assign layout = slider.layout -%}

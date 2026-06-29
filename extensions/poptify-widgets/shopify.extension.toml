@@ -6,3 +6,5 @@ api_version = "2026-04"
 type = "theme"
 name = "poptify-widgets"
 handle = "poptify-widgets"
+
+uid = "cba79b77-2dcb-1b66-9150-0fa23f40420f6557cbe2"
