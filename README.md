@@ -1,4 +1,4 @@
-# Poptify Backend
+# Poptify Backend 
 
 Backend cho Shopify **embedded** app "Poptify: Popup & Sales Slider".
 Stack: **NestJS + TypeORM + MySQL**, Admin API `2026-04`, auth qua **Token Exchange** (offline token).
