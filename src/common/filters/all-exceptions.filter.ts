@@ -42,7 +42,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
         exception instanceof Error ? exception.stack : String(exception),
       );
     } else {
-      this.logger.error(`${request.method} ${request.url} → ${status}`, context);
+      this.logger.error(
+        `${request.method} ${request.url} → ${status}`,
+        context,
+      );
     }
 
     response.status(status).json({

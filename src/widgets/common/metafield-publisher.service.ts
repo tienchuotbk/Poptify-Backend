@@ -160,7 +160,9 @@ export class MetafieldPublisherService {
       const live = data.currentAppInstallation.accessScopes
         .map((s) => s.handle)
         .sort();
-      lines.push(`  • Scope LIVE (currentAppInstallation): ${live.join(', ') || '(empty)'}`);
+      lines.push(
+        `  • Scope LIVE (currentAppInstallation): ${live.join(', ') || '(empty)'}`,
+      );
       lines.push(
         live.includes('write_products')
           ? `    → Token gọi Admin API OK & có write_products. 403 nhiều khả năng do quyền GHI shop metafield / definition chưa deploy.`
