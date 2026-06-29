@@ -74,7 +74,9 @@ export class OfflineTokenService {
       return null;
     }
 
-    const expiresAt = entity.expires ? new Date(entity.expires).getTime() : null;
+    const expiresAt = entity.expires
+      ? new Date(entity.expires).getTime()
+      : null;
     const expiringSoon =
       expiresAt !== null && expiresAt - Date.now() < EXPIRY_BUFFER_MS;
 
@@ -181,7 +183,8 @@ export class OfflineTokenService {
 
   private async persist(shop: string, data: TokenResponse): Promise<Session> {
     const id = this.shopify.session.getOfflineId(shop);
-    const entity = (await this.sessions.loadEntity(id)) ?? new ShopifySessionEntity();
+    const entity =
+      (await this.sessions.loadEntity(id)) ?? new ShopifySessionEntity();
     entity.id = id;
     entity.shop = shop;
     entity.state = entity.state ?? '';
