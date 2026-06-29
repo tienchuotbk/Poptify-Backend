@@ -128,4 +128,52 @@ describe('OfflineTokenService (expiring offline token)', () => {
     expect(await service.getValidSession(SHOP)).toBeNull();
     expect(global.fetch).not.toHaveBeenCalled();
   });
+
+  it('refresh đồng thời cùng shop chỉ gọi token endpoint 1 lần (lock)', async () => {
+    await seed(storage, {
+      expires: new Date(Date.now() + 10_000),
+      refreshToken: 'shprt_old',
+      refreshTokenExpires: new Date(Date.now() + 86_400_000),
+    });
+    mockFetchOnce({
+      access_token: 'shpat_refreshed',
+      expires_in: 3600,
+      refresh_token: 'shprt_refreshed',
+      refresh_token_expires_in: 7776000,
+    });
+
+    const [a, b] = await Promise.all([
+      service.getValidSession(SHOP),
+      service.getValidSession(SHOP),
+    ]);
+
+    expect(a?.accessToken).toBe('shpat_refreshed');
+    expect(b?.accessToken).toBe('shpat_refreshed');
+    expect(global.fetch).toHaveBeenCalledTimes(1); // lock gộp 2 refresh thành 1
+  });
+
+  it('refresh retry 1 lần khi không nhận được response (network error)', async () => {
+    await seed(storage, {
+      expires: new Date(Date.now() + 10_000),
+      refreshToken: 'shprt_old',
+      refreshTokenExpires: new Date(Date.now() + 86_400_000),
+    });
+    (global.fetch as jest.Mock)
+      .mockRejectedValueOnce(new Error('network down'))
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          access_token: 'shpat_after_retry',
+          expires_in: 3600,
+          refresh_token: 'shprt_x',
+          refresh_token_expires_in: 7776000,
+        }),
+        text: async () => '',
+      });
+
+    const session = await service.getValidSession(SHOP);
+    expect(session?.accessToken).toBe('shpat_after_retry');
+    expect(global.fetch).toHaveBeenCalledTimes(2); // 1 fail + 1 retry
+  });
 });

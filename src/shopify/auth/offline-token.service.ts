@@ -30,6 +30,10 @@ const EXPIRY_BUFFER_MS = 2 * 60 * 1000;
 export class OfflineTokenService {
   private readonly logger = new Logger(OfflineTokenService.name);
 
+  // Lock refresh theo shop (in-process). refresh_token là one-time-use → publish
+  // song song (event app-settings.changed) không được refresh đồng thời.
+  private readonly refreshing = new Map<string, Promise<Session | null>>();
+
   constructor(
     @Inject(SHOPIFY_API) private readonly shopify: ShopifyApi,
     private readonly config: ConfigService,
@@ -82,7 +86,21 @@ export class OfflineTokenService {
     return this.refresh(sanitizedShop, entity);
   }
 
-  private async refresh(
+  private refresh(
+    shop: string,
+    entity: ShopifySessionEntity,
+  ): Promise<Session | null> {
+    // Gộp các refresh đồng thời cho cùng shop về 1 promise (get/set đồng bộ → atomic).
+    const inflight = this.refreshing.get(shop);
+    if (inflight) return inflight;
+    const promise = this.performRefresh(shop, entity).finally(() =>
+      this.refreshing.delete(shop),
+    );
+    this.refreshing.set(shop, promise);
+    return promise;
+  }
+
+  private async performRefresh(
     shop: string,
     entity: ShopifySessionEntity,
   ): Promise<Session | null> {
@@ -102,12 +120,15 @@ export class OfflineTokenService {
       return null;
     }
 
+    // retryOnNetworkError: nếu không nhận được response, refresh_token có thể đã bị
+    // tiêu thụ server-side → retry cùng request (Shopify trả lại response trong retry window).
     const data = await this.post(
       shop,
       this.baseParams({
         grant_type: 'refresh_token',
         refresh_token: entity.refreshToken,
       }),
+      { retryOnNetworkError: true },
     );
     this.logger.log(`Refresh offline token OK cho ${shop}`);
     return this.persist(shop, data);
@@ -124,15 +145,31 @@ export class OfflineTokenService {
   private async post(
     shop: string,
     body: URLSearchParams,
+    opts?: { retryOnNetworkError?: boolean },
   ): Promise<TokenResponse> {
-    const res = await fetch(`https://${shop}/admin/oauth/access_token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Accept: 'application/json',
-      },
-      body,
-    });
+    const send = (): ReturnType<typeof fetch> =>
+      fetch(`https://${shop}/admin/oauth/access_token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
+        },
+        body,
+      });
+
+    let res: Awaited<ReturnType<typeof fetch>>;
+    try {
+      res = await send();
+    } catch (networkErr) {
+      // Chỉ retry khi KHÔNG nhận được response (fetch throw), KHÔNG retry khi có
+      // response lỗi (HTTP status) — tránh dùng lại refresh_token đã bị từ chối.
+      if (!opts?.retryOnNetworkError) throw networkErr;
+      this.logger.warn(
+        `Không nhận được response từ token endpoint (${shop}) — retry 1 lần.`,
+      );
+      res = await send();
+    }
+
     if (!res.ok) {
       const text = await res.text().catch(() => '');
       throw new Error(
