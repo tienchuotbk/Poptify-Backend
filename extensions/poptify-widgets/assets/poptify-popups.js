@@ -150,9 +150,14 @@
     if (d.borderRadius) box.style.borderRadius = d.borderRadius;
     if (d.width) box.style.maxWidth = d.width;
 
+    function onKey(e) {
+      if (e.key === 'Escape' || e.keyCode === 27) dismiss();
+    }
     function dismiss() {
+      document.removeEventListener('keydown', onKey);
       if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
     }
+    document.addEventListener('keydown', onKey);
 
     if (d.showCloseButton !== false) {
       var close = document.createElement('button');
