@@ -1,7 +1,6 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { OfflineTokenService } from '../../shopify/auth/offline-token.service';
 import { AdminGraphqlService } from '../../shopify/graphql/admin-graphql.service';
-import { TypeormSessionStorage } from '../../shopify/session/typeorm-session.storage';
-import { SHOPIFY_API, ShopifyApi } from '../../shopify/shopify.constants';
 
 /** Lấy GID của shop để làm `ownerId` cho metafield (owner = Shop). */
 const SHOP_GID_QUERY = `query ShopGid {
@@ -48,17 +47,17 @@ interface MetafieldsSetResponse {
  * Publish config widget lên shop metafield (task 6.5 / D6-D8).
  * Theme app extension đọc metafield qua Liquid → KHÔNG cần endpoint public.
  *
- * Dùng OFFLINE session (background, không gắn user) load từ `TypeormSessionStorage`
- * theo id `offline_<shop>`. Nếu session thiếu (chưa cài / đã gỡ app) → degrade
- * graceful (log + `{published:false}`), KHÔNG throw để không vỡ luồng CRUD.
+ * Dùng OFFLINE session (background, không gắn user) qua `OfflineTokenService.getValidSession`
+ * — tự refresh expiring token khi sắp/đã hết hạn. Nếu không có session hợp lệ (chưa cài /
+ * đã gỡ / refresh token hết hạn) → degrade graceful (log + `{published:false}`), KHÔNG throw
+ * để không vỡ luồng CRUD.
  */
 @Injectable()
 export class MetafieldPublisherService {
   private readonly logger = new Logger(MetafieldPublisherService.name);
 
   constructor(
-    @Inject(SHOPIFY_API) private readonly shopify: ShopifyApi,
-    private readonly sessions: TypeormSessionStorage,
+    private readonly offlineToken: OfflineTokenService,
     private readonly admin: AdminGraphqlService,
   ) {}
 
@@ -72,11 +71,11 @@ export class MetafieldPublisherService {
     key: string,
     value: unknown,
   ): Promise<{ published: boolean }> {
-    const offlineId = this.shopify.session.getOfflineId(shop);
-    const session = await this.sessions.loadSession(offlineId);
+    // getValidSession tự refresh expiring offline token khi sắp/đã hết hạn.
+    const session = await this.offlineToken.getValidSession(shop);
     if (!session) {
       this.logger.warn(
-        `Bỏ qua publish metafield "${key}": không có offline session cho ${shop}`,
+        `Bỏ qua publish metafield "${key}": không có offline session hợp lệ cho ${shop}`,
       );
       return { published: false };
     }

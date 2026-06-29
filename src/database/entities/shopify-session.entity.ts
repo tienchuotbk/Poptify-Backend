@@ -35,6 +35,19 @@ export class ShopifySessionEntity {
   })
   accessToken?: string | null;
 
+  // Expiring offline token (12/2025): refresh_token để gia hạn access token không cần
+  // tương tác merchant. Mã hóa at-rest như accessToken. null = token non-expiring cũ.
+  @Column({
+    type: 'text',
+    nullable: true,
+    transformer: tokenEncryptionTransformer,
+  })
+  refreshToken?: string | null;
+
+  // Hạn của refresh_token (~90 ngày). Hết hạn → merchant phải mở lại app.
+  @Column({ type: 'datetime', nullable: true })
+  refreshTokenExpires?: Date | null;
+
   // JSON-serialized OnlineAccessInfo; null cho offline session.
   @Column({ type: 'text', nullable: true })
   onlineAccessInfo?: string | null;

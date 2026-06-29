@@ -1,31 +1,28 @@
 import { Session } from '@shopify/shopify-api';
+import { OfflineTokenService } from '../../shopify/auth/offline-token.service';
 import { AdminGraphqlService } from '../../shopify/graphql/admin-graphql.service';
-import { TypeormSessionStorage } from '../../shopify/session/typeorm-session.storage';
-import { ShopifyApi } from '../../shopify/shopify.constants';
 import { MetafieldPublisherService } from './metafield-publisher.service';
 
 const SHOP = 'acme.myshopify.com';
 const SHOP_GID = 'gid://shopify/Shop/123456';
 
 function buildService() {
-  const getOfflineId = jest.fn().mockReturnValue(`offline_${SHOP}`);
-  const loadSession = jest.fn();
+  const getValidSession = jest.fn();
   const query = jest.fn();
 
-  const shopify = { session: { getOfflineId } } as unknown as ShopifyApi;
-  const sessions = { loadSession } as unknown as TypeormSessionStorage;
+  const offlineToken = { getValidSession } as unknown as OfflineTokenService;
   const admin = { query } as unknown as AdminGraphqlService;
 
-  const service = new MetafieldPublisherService(shopify, sessions, admin);
-  return { service, getOfflineId, loadSession, query };
+  const service = new MetafieldPublisherService(offlineToken, admin);
+  return { service, getValidSession, query };
 }
 
 const fakeSession = { id: `offline_${SHOP}`, shop: SHOP } as Session;
 
 describe('MetafieldPublisherService (task 6.5)', () => {
   it('không có offline session → degrade graceful (không gọi Admin, không throw)', async () => {
-    const { service, loadSession, query } = buildService();
-    loadSession.mockResolvedValue(undefined);
+    const { service, getValidSession, query } = buildService();
+    getValidSession.mockResolvedValue(null);
 
     const result = await service.publish(SHOP, 'popups', { popups: [] });
 
@@ -34,8 +31,8 @@ describe('MetafieldPublisherService (task 6.5)', () => {
   });
 
   it('publish: lấy shop gid rồi metafieldsSet với ownerId/key/type/value đúng', async () => {
-    const { service, loadSession, query } = buildService();
-    loadSession.mockResolvedValue(fakeSession);
+    const { service, getValidSession, query } = buildService();
+    getValidSession.mockResolvedValue(fakeSession);
     query
       .mockResolvedValueOnce({ shop: { id: SHOP_GID } }) // ShopGid query
       .mockResolvedValueOnce({
@@ -66,8 +63,8 @@ describe('MetafieldPublisherService (task 6.5)', () => {
   });
 
   it('userErrors từ metafieldsSet → throw', async () => {
-    const { service, loadSession, query } = buildService();
-    loadSession.mockResolvedValue(fakeSession);
+    const { service, getValidSession, query } = buildService();
+    getValidSession.mockResolvedValue(fakeSession);
     query
       .mockResolvedValueOnce({ shop: { id: SHOP_GID } })
       .mockResolvedValueOnce({
@@ -85,8 +82,8 @@ describe('MetafieldPublisherService (task 6.5)', () => {
   });
 
   it('lỗi query lấy shop gid → propagate ra caller', async () => {
-    const { service, loadSession, query } = buildService();
-    loadSession.mockResolvedValue(fakeSession);
+    const { service, getValidSession, query } = buildService();
+    getValidSession.mockResolvedValue(fakeSession);
     query.mockRejectedValueOnce(new Error('network'));
 
     await expect(service.publish(SHOP, 'popups', {})).rejects.toThrow(
@@ -95,8 +92,8 @@ describe('MetafieldPublisherService (task 6.5)', () => {
   });
 
   it('response thiếu metafieldsSet → throw controlled', async () => {
-    const { service, loadSession, query } = buildService();
-    loadSession.mockResolvedValue(fakeSession);
+    const { service, getValidSession, query } = buildService();
+    getValidSession.mockResolvedValue(fakeSession);
     query
       .mockResolvedValueOnce({ shop: { id: SHOP_GID } })
       .mockResolvedValueOnce({});
