@@ -1,17 +1,17 @@
 {% comment %}
   Poptify — Popup app embed block (storefront).
   Đọc app-owned shop metafield ($app namespace, owner Shop) do backend publish:
-    - shop.metafields.app.settings → PublicAppSettings
-    - shop.metafields.app.popups   → { popups: PublicPopup[] }
+    - shop.metafields["$app"].settings → PublicAppSettings
+    - shop.metafields["$app"].popups   → { popups: PublicPopup[] }
   Xuất ra <script type="application/json"> + inject page_type; asset JS thực thi
   gate/trigger/frequency/render (không gọi backend lúc buyer xem — D6).
 {% endcomment %}
 
 <script type="application/json" id="poptify-settings-data">
-  {{ shop.metafields.app.settings.value | json }}
+  {{ shop.metafields["$app"].settings.value | json }}
 </script>
 <script type="application/json" id="poptify-popups-data">
-  {{ shop.metafields.app.popups.value | json }}
+  {{ shop.metafields["$app"].popups.value | json }}
 </script>
 <div id="poptify-root" data-page-type="{{ request.page_type }}" hidden></div>
 

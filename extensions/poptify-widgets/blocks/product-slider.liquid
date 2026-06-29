@@ -1,11 +1,11 @@
 {% comment %}
   Poptify — Product Slider app block (storefront). Merchant thêm block vào section
-  (vd product page). Đọc shop.metafields.app.sliders → render product **Liquid-native**
+  (vd product page). Đọc shop.metafields["$app"].sliders → render product **Liquid-native**
   qua handle (`all_products[handle]` / `collections[handle].products`) → giá/tồn kho
   luôn tươi, không cần Storefront token. Metafield đã gate server-side (app off → rỗng).
 {% endcomment %}
 
-{%- assign poptify_sliders = shop.metafields.app.sliders.value -%}
+{%- assign poptify_sliders = shop.metafields["$app"].sliders.value -%}
 {%- assign page_key = request.page_type -%}
 {%- if page_key == 'index' -%}{%- assign page_key = 'homepage' -%}{%- endif -%}
 
