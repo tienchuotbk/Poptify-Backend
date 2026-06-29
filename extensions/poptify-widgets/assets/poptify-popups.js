@@ -183,6 +183,9 @@
       var a = document.createElement('a');
       a.className = 'poptify-btn';
       a.textContent = c.buttonText;
+      // Nút = đảo màu popup (nền = màu chữ, chữ = màu nền) — khớp preview ở Admin.
+      a.style.backgroundColor = d.textColor || '#1a1a1a';
+      a.style.color = d.backgroundColor || '#ffffff';
       // chỉ nhận https (BE đã validate; guard lần nữa chống javascript:/data:).
       if (c.buttonLink && /^https:\/\//i.test(c.buttonLink)) {
         a.href = c.buttonLink;
